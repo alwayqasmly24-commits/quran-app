@@ -2,58 +2,75 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>قرآني - صدقة جارية</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Amiri',serif;background:#e8dfc8;margin:0;padding:10px}
-h1{text-align:center;color:#0a5c36;font-size:21px;margin:8px}
-select{width:100%;padding:12px;margin:10px 0;font-size:18px;border-radius:10px;font-family:'Amiri',serif}
-.mushaf{background:#fffdf0;border:4px solid #b8860b;outline:2px solid #1a3a8a;outline-offset:-10px;border-radius:6px;padding:22px 14px;font-family:'Amiri Quran','Amiri',serif;font-size:32px;line-height:2.15;text-align:justify;direction:rtl}
-.surah-header{background:linear-gradient(90deg,#1a3a8a,#2a4a9a,#1a3a8a);border:3px solid #d4a017;border-radius:12px;padding:10px;margin:0 0 18px;text-align:center;position:relative}
-.surah-header-inner{background:#fffdf0;border:2px solid #b8860b;border-radius:20px;display:inline-block;padding:4px 28px}
-.surah-header span{font-size:30px;font-weight:bold;color:#111}
-.basmala{text-align:center;font-size:34px;margin:0 0 16px;color:#111;line-height:1.8}
-.basmala b{color:#c0392b}
-.ayah-num{display:inline-block;background:#fdf6d8;border:2px solid #b8860b;color:#111;font-size:20px;font-weight:bold;width:34px;height:34px;line-height:30px;text-align:center;border-radius:50%;margin:0 4px;vertical-align:middle;box-shadow:0 0 0 2px #fffdf0,0 0 0 3px #b8860b}
-audio{width:100%;margin-top:12px}
-.loading{text-align:center;padding:20px}
+*{box-sizing:border-box}
+body{margin:0;background:#E8DCC3;font-family:'Amiri',serif;color:#1a1a1a;padding:15px}
+h1{text-align:center;color:#1B5E2A;font-size:26px;margin:15px 0 20px}
+select{width:100%;padding:14px;font-size:20px;font-family:inherit;border-radius:12px;border:1px solid #ccc;background:#eee;text-align:right}
+.frame{margin-top:15px;background:#C5A227;padding:10px;border-radius:10px}
+.inner{background:#FFFBEF;border:3px solid #1E3A8A;border-radius:8px;padding:25px 15px;min-height:200px;text-align:center}
+.basmala{font-size:28px;color:#1B5E2A;margin-bottom:20px;font-weight:bold}
+.ayah{font-size:28px;line-height:2.4;display:inline}
+.num{color:#C5A227;font-size:18px;margin:0 4px}
+.loading{font-size:32px;padding:40px 0}
+audio{width:100%;margin-top:15px}
+.error{color:red;font-size:18px}
 </style>
 </head>
 <body>
 <h1>🕌 قرآني - صدقة جارية</h1>
-<select id="surah" onchange="loadSurah()"></select>
-<div id="box" class="mushaf"><div class="loading">جاري التحميل...</div></div>
-<audio id="audio" controls></audio>
+<select id="surahSelect" onchange="loadSurah()"></select>
+<div class="frame"><div class="inner" id="content"><div class="loading">جاري التحميل...</div></div></div>
+<audio id="player" controls></audio>
+
 <script>
-const toArabicNum=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
-async function init(){
- let r=await fetch("https://api.alquran.cloud/v1/surah");
- let j=await r.json();
- document.getElementById("surah").innerHTML=j.data.map(s=>`<option value="${s.number}">${s.number} - ${s.name}</option>`).join("");
- loadSurah();
-}
+const surahs = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس","هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه","الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم","لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر","فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق","الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة","الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج","نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس","التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد","الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات","القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر","المسد","الإخلاص","الفلق","الناس"];
+const sel = document.getElementById('surahSelect');
+surahs.forEach((n,i)=>{let o=document.createElement('option');o.value=i+1;o.text=(i+1)+' - سورة '+n;sel.appendChild(o);});
+
 async function loadSurah(){
- let n=document.getElementById("surah").value||2;
- document.getElementById("surah").value=n;
- let box=document.getElementById("box");
- box.innerHTML='<div class="loading">جاري التحميل...</div>';
- let r=await fetch(`https://api.alquran.cloud/v1/surah/${n}/quran-uthmani`);
- let j=await r.json();
- let s=j.data;
- let ayahs=s.ayahs;
- let cleanName=s.name.replace(/سُورَةُ|سورة/g,"").trim();
- let html=`<div class="surah-header"><div class="surah-header-inner"><span>سورة ${cleanName}</span></div></div>`;
-   ayahs=ayahs.slice(1).map((a,i)=>({...a,numberInSurah:i+1}));
-   first=first.replace(/^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ */,"");
-   ayahs[0]={...ayahs[0],text:first};
- ayahs.forEach(a=>{
-   html+=`${a.text} <span class="ayah-num">${toArabicNum(a.numberInSurah)}</span> `;
- });
- box.innerHTML=html;
- document.getElementById("audio").src=`https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${n}.mp3`;
+  const num = sel.value;
+  const content = document.getElementById('content');
+  const player = document.getElementById('player');
+  content.innerHTML = '<div class="loading">جاري التحميل...</div>';
+  player.src = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${num}.mp3`;
+  let data = null;
+  // المحاولة 1
+  try{
+    let r = await fetch(`https://api.alquran.cloud/v1/surah/${num}/quran-uthmani`);
+    let j = await r.json();
+    if(j.data) data = j.data.ayahs;
+  }catch(e){}
+  // المحاولة 2 اذا الاولى فشلت
+  if(!data){
+    try{
+      let r2 = await fetch(`https://api.alquran.cloud/v1/surah/${num}`);
+      let j2 = await r2.json();
+      if(j2.data) data = j2.data.ayahs;
+    }catch(e){}
+  }
+  if(!data){
+    content.innerHTML = '<div class="error">تعذر التحميل، تأكد من الإنترنت وحدث الصفحة</div>';
+    return;
+  }
+  let html = '';
+  // البسملة مرة واحدة فقط في الأعلى، ما عدا الفاتحة والتوبة
+  if(num != 1 && num != 9){
+    html += '<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>';
+  }
+  data.forEach(a=>{
+    let text = a.text;
+    // اذا البسملة موجودة داخل أول آية في غير الفاتحة، احذفها لأننا حطيناها فوق
+    if(a.numberInSurah==1 && num != 1 && num != 9){
+      text = text.replace('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ','').trim();
+    }
+    html += `<span class="ayah">${text} <span class="num">﴿${a.numberInSurah}﴾</span> </span>`;
+  });
+  content.innerHTML = html;
 }
-init();
+loadSurah();
 </script>
 </body>
 </html>
