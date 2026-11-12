@@ -44,10 +44,6 @@ async function loadSurah(){
  let ayahs=s.ayahs;
  let cleanName=s.name.replace(/سُورَةُ|سورة/g,"").trim();
  let html=`<div class="surah-header"><div class="surah-header-inner"><span>سورة ${cleanName}</span></div></div>`;
- if(n!=9){
-   html+=`<div class="basmala">بِسْمِ <b>ٱللَّهِ</b> ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>`;
- }
- if(n==1){
    ayahs=ayahs.slice(1).map((a,i)=>({...a,numberInSurah:i+1}));
  } else if(n!=9){
    let first=ayahs[0].text;
