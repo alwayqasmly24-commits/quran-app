@@ -2,66 +2,56 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>قرآني - صدقة جارية</title>
 <style>
-body{font-family:Arial;background:#f5f0e6;margin:0;padding:10px}
-h1{text-align:center;color:#0a5c36}
-.tabs{display:flex;gap:5px}
-.tabs button{flex:1;padding:12px;border:none;border-radius:10px;background:#0a5c36;color:#fff;font-size:16px}
-.tabs button.active{background:#d4a017}
-.card{background:#fff;padding:12px;margin:8px 0;border-radius:12px;cursor:pointer}
-.surah-text{font-size:24px;line-height:2;text-align:center;background:#fff;padding:15px;border-radius:12px}
-audio{width:100%;margin-top:10px}
-select{width:100%;padding:10px;margin:10px 0;font-size:16px;border-radius:8px}
-.back{padding:10px;background:#eee;border:none;border-radius:8px;width:100%;margin-bottom:10px}
+body{font-family:Arial;background:#f5f0e6;margin:0;padding:12px}
+h1{text-align:center;color:#0a5c36;font-size:22px}
+select{width:100%;padding:12px;margin:10px 0;font-size:16px;border-radius:10px}
+.mushaf{background:#fffdf7;border:2px solid #d4a017;border-radius:14px;padding:18px 14px;font-size:26px;line-height:2.15;text-align:justify;direction:rtl}
+.basmala{text-align:center;font-size:28px;margin:0 0 14px;color:#0a5c36;font-weight:bold}
+.ayah-num{color:#b8860b;font-size:20px;padding:0 4px;white-space:nowrap}
+.surah-name{text-align:center;font-size:24px;font-weight:bold;color:#0a5c36;margin:6px 0 10px}
+audio{width:100%;margin-top:12px}
+.loading{text-align:center;padding:20px}
 </style>
 </head>
 <body>
 <h1>🕌 قرآني - صدقة جارية</h1>
-<div class="tabs">
-<button id="btn1" class="active" onclick="showTab(1)">📖 القراءة</button>
-<button id="btn2" onclick="showTab(2)">🎧 القراء</button>
-</div>
-<select id="reader" onchange="changeReader()">
-<option value="ar.alafasy">مشاري العفاسي</option>
-<option value="ar.abdulbasitmurattal">عبدالباسط عبدالصمد</option>
-<option value="ar.abdullahawadaljuhany">عبدالله عواد الجهني</option>
-<option value="ar.mahermuaiqly">ماهر المعيقلي</option>
-<option value="ar.minshawi">محمد صديق المنشاوي</option>
-<option value="ar.saoodshuraym">سعود الشريم</option>
-</select>
-<div id="list"></div>
-<div id="view" style="display:none">
-<button class="back" onclick="goBack()">⬅ رجوع لكل السور</button>
-<div id="surahTitle"></div>
-<div id="surahContent"></div>
-</div>
+<select id="surah" onchange="loadSurah()"></select>
+<div id="box" class="mushaf"><div class="loading">جاري التحميل...</div></div>
+<audio id="audio" controls></audio>
 <script>
-let currentReader="ar.alafasy";let mode=1;
-async function loadSurahs(){
-let res=await fetch("https://api.alquran.cloud/v1/meta");
-let data=await res.json();
-let surahs=data.data.surahs.references;let html="";
-surahs.forEach(s=>{html+=`<div class="card" onclick="openSurah(${s.number})"><b>${s.number} - ${s.name}</b><br><span>${s.englishName} - ${s.numberOfAyahs} آية</span></div>`;});
-document.getElementById("list").innerHTML=html;
+const toArabicNum=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
+async function init(){
+ let r=await fetch("https://api.alquran.cloud/v1/surah");
+ let j=await r.json();
+ document.getElementById("surah").innerHTML=j.data.map(s=>`<option value="${s.number}">${s.number} - ${s.name}</option>`).join("");
+ loadSurah();
 }
-function showTab(n){mode=n;document.getElementById("btn1").classList.toggle("active",n==1);document.getElementById("btn2").classList.toggle("active",n==2);goBack();}
-function changeReader(){currentReader=document.getElementById("reader").value;}
-async function openSurah(num){
-document.getElementById("list").style.display="none";
-document.getElementById("view").style.display="block";
-document.getElementById("surahContent").innerHTML="جاري التحميل...";
-let t=await fetch(`https://api.alquran.cloud/v1/surah/${num}`);let td=await t.json();
-let a=await fetch(`https://api.alquran.cloud/v1/surah/${num}/${currentReader}`);let ad=await a.json();
-document.getElementById("surahTitle").innerHTML=`<h2>${td.data.name}</h2>`;
-let html="";
-if(mode==1){td.data.ayahs.forEach(x=>{html+=`<p class="surah-text">${x.text} ﴿${x.numberInSurah}﴾</p>`;});}
-else{html+=`<audio controls autoplay src="${ad.data.ayahs[0].audio}"></audio>`;ad.data.ayahs.forEach(x=>{html+=`<div class="card"><b>آية ${x.numberInSurah}</b><br>${x.text}<br><audio controls src="${x.audio}"></audio></div>`;});}
-document.getElementById("surahContent").innerHTML=html;
+async function loadSurah(){
+ let n=document.getElementById("surah").value||2;
+ document.getElementById("surah").value=n;
+ let box=document.getElementById("box");
+ box.innerHTML='<div class="loading">جاري التحميل...</div>';
+ let r=await fetch(`https://api.alquran.cloud/v1/surah/${n}`);
+ let j=await r.json();
+ let s=j.data;
+ let ayahs=s.ayahs;
+ let html=`<div class="surah-name">سورة ${s.name}</div>`;
+ if(n!=1 && n!=9){
+   html+=`<div class="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>`;
+   let first=ayahs[0].text;
+   first=first.replace(/^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ */,"");
+   ayahs[0]={...ayahs[0],text:first};
+ }
+ ayahs.forEach(a=>{
+   html+=`${a.text} <span class="ayah-num">﴿${toArabicNum(a.numberInSurah)}﴾</span> `;
+ });
+ box.innerHTML=html;
+ document.getElementById("audio").src=`https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${n}.mp3`;
 }
-function goBack(){document.getElementById("list").style.display="block";document.getElementById("view").style.display="none";}
-loadSurahs();
+init();
 </script>
 </body>
 </html>
